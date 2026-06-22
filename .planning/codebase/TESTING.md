@@ -29,7 +29,7 @@ cd backend && pytest --cov=.          # Coverage report
 - `test_<module>.py` — e.g., `test_sign_recognizer.py`, `test_sentence_builder.py`, `test_main.py`
 
 **Structure:**
-```
+```text
 backend/
 ├── tests/
 │   ├── __init__.py

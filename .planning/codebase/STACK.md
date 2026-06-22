@@ -71,7 +71,7 @@
 **Environment:**
 - Backend: `backend/.env` (gitignored, never committed)
   - `GEMINI_API_KEY` — Gemini API authentication
-  - `MODEL_WEIGHTS_PATH` — Path to `isl_transformer.pt` (default: `./weights/isl_transformer.pt`)
+  - `MODEL_WEIGHTS_PATH` — Path to `isl_lstm.pt` (default: `./weights/isl_lstm.pt`)
   - `MAX_VIDEO_SIZE_MB` — Upload limit (default: 50)
 - Frontend: `frontend/.env.local` (gitignored)
   - `NEXT_PUBLIC_BACKEND_URL` — Backend API URL (default: `http://localhost:8000`)
