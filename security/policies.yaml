@@ -1,0 +1,87 @@
+# policies.yaml — ISL Translator Security Policy
+# Layer 1: Structural (deterministic, no LLM call)
+# Layer 2: Semantic (LLM-checked, see backend/utils/policy_service.py)
+
+environments:
+  localhost:
+    blocked_tools:
+      - delete_database
+      - deploy_to_production
+      - send_email
+    allowed_file_extensions:
+      - .py
+      - .ts
+      - .tsx
+      - .json
+      - .md
+      - .mp4
+      - .webm
+      - .mov
+      - .npy
+    max_file_size_mb: 50
+
+  production:
+    blocked_tools:
+      - run_training
+      - delete_database
+      - write_to_data_folder
+    allowed_file_extensions:
+      - .mp4
+      - .webm
+      - .mov
+    max_file_size_mb: 50
+
+roles:
+  viewer:
+    allowed_tools:
+      - read_file
+      - list_files
+      - predict_sign
+      - build_sentence
+
+  developer:
+    allowed_tools:
+      - read_file
+      - write_file
+      - list_files
+      - run_tests
+      - predict_sign
+      - build_sentence
+      - extract_landmarks
+      - run_training
+
+  admin:
+    allowed_tools:
+      - "*"
+
+# High-risk actions require manual human approval before execution
+human_approval_required:
+  - deploy_to_production
+  - delete_database
+  - modify_model_weights
+  - change_cors_policy
+
+# Secret patterns — agent must never write these into code files
+blocked_secret_patterns:
+  - "GEMINI_API_KEY\\s*=\\s*['\"][A-Za-z0-9]+"
+  - "password\\s*=\\s*['\"][^'\"]{4,}"
+  - "sk-[A-Za-z0-9]{32,}"
+  - "AIza[A-Za-z0-9_\\-]{35}"
+
+# File paths the agent can NEVER read or write
+protected_paths:
+  - backend/.env
+  - frontend/.env.local
+  - backend/weights/
+  - "**/.git/**"
+
+# Sandbox settings
+sandbox:
+  enabled: true
+  block_raw_internet_access: true
+  allowed_outbound_domains:
+    - api.gemini.google.com
+    - zenodo.org
+    - pypi.org
+    - registry.npmjs.org
+  reset_between_sessions: true

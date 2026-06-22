@@ -1,0 +1,111 @@
+# mcp_config.json — MCP Server Configuration for ISL Translator
+# Place this file at: isl-translator/.agents/mcp_config.json
+# Antigravity reads this to know which MCP servers to connect
+
+{
+  "servers": [
+    {
+      "name": "filesystem",
+      "description": "Scoped file system access for the ISL translator project",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/path/to/isl-translator"],
+      "scope": {
+        "read": [
+          "specs/",
+          "evals/",
+          "backend/",
+          "frontend/",
+          "training/",
+          ".agents/skills/"
+        ],
+        "write": [
+          "backend/",
+          "frontend/",
+          "training/",
+          "data/landmarks/"
+        ],
+        "blocked": [
+          "backend/.env",
+          "frontend/.env.local",
+          "backend/weights/",
+          ".git/"
+        ]
+      },
+      "notes": "Read-only on specs and evals. Agent cannot touch .env files or model weights directly."
+    },
+    {
+      "name": "github",
+      "description": "GitHub integration for PR review and code inspection",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "[[GITHUB_TOKEN]]"
+      },
+      "scope": {
+        "allowed_actions": [
+          "list_pull_requests",
+          "get_pull_request",
+          "create_review_comment",
+          "get_file_contents"
+        ],
+        "blocked_actions": [
+          "merge_pull_request",
+          "delete_branch",
+          "push_to_main"
+        ]
+      },
+      "notes": "Agent can review PRs and post comments. Cannot merge or push directly."
+    },
+    {
+      "name": "gemini-api",
+      "description": "Gemini API access for sentence building — Model 2",
+      "transport": "stdio",
+      "command": "python",
+      "args": [".agents/mcp_servers/gemini_server.py"],
+      "env": {
+        "GEMINI_API_KEY": "[[GEMINI_API_KEY]]"
+      },
+      "scope": {
+        "allowed_models": [
+          "gemini-1.5-flash"
+        ],
+        "max_tokens_per_call": 100,
+        "rate_limit_per_minute": 60
+      },
+      "notes": "Only gemini-1.5-flash allowed. Max 100 tokens per call to control cost."
+    }
+  ],
+
+  "security": {
+    "policy_file": "security/policies.yaml",
+    "require_human_approval_for": [
+      "any write to backend/main.py",
+      "any change to CORS config",
+      "any change to model weights path"
+    ],
+    "log_all_tool_calls": true,
+    "audit_log_path": ".agents/logs/tool_calls.jsonl"
+  },
+
+  "context_loading": {
+    "always_load": [
+      "AGENTS.md",
+      "security/policies.yaml"
+    ],
+    "load_on_demand": [
+      "specs/isl_translation.md",
+      ".agents/skills/landmark-extraction/SKILL.md",
+      ".agents/skills/sign-recognizer/SKILL.md",
+      ".agents/skills/sentence-builder/SKILL.md",
+      ".agents/skills/code-review/SKILL.md"
+    ],
+    "never_load": [
+      "backend/.env",
+      "frontend/.env.local",
+      "data/",
+      "backend/weights/"
+    ]
+  }
+}

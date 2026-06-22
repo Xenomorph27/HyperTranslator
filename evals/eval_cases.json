@@ -1,0 +1,247 @@
+[
+  {
+    "case_id": "landmark_extraction_001",
+    "description": "Positive trigger — landmark extractor receives valid 30-frame video clip",
+    "input": {
+      "video_path": "data/include_raw/hello_001.mp4",
+      "num_frames": 30
+    },
+    "expected_skill": "landmark-extraction",
+    "expected_tool_calls": [
+      { "tool": "load_video", "args": { "path": "data/include_raw/hello_001.mp4" } },
+      { "tool": "extract_landmarks", "args": { "frames": 30 } },
+      { "tool": "save_npy", "args": { "out_dir": "data/landmarks/" } }
+    ],
+    "expected_output_format": "numpy_array_shape_(30,2172)",
+    "rubric": [
+      "output shape is exactly (30, 2172)",
+      "no NaN values in array",
+      "file saved to data/landmarks/ with matching filename"
+    ]
+  },
+  {
+    "case_id": "landmark_extraction_002",
+    "description": "Positive trigger — handles video shorter than 30 frames by zero-padding",
+    "input": {
+      "video_path": "data/include_raw/short_clip.mp4",
+      "num_frames": 18
+    },
+    "expected_skill": "landmark-extraction",
+    "expected_tool_calls": [
+      { "tool": "load_video", "args": { "path": "data/include_raw/short_clip.mp4" } },
+      { "tool": "pad_frames", "args": { "target": 30 } },
+      { "tool": "extract_landmarks", "args": { "frames": 30 } }
+    ],
+    "expected_output_format": "numpy_array_shape_(30,2172)",
+    "rubric": [
+      "output shape is still (30, 2172) despite short input",
+      "padded frames are zeros, not repeated frames"
+    ]
+  },
+  {
+    "case_id": "landmark_extraction_003",
+    "description": "Negative trigger — should NOT use this skill for audio files",
+    "input": {
+      "file_path": "data/audio.mp3"
+    },
+    "expected_skill": null,
+    "expected_output_format": "error_message",
+    "rubric": [
+      "skill does not trigger",
+      "returns clear error: unsupported file type"
+    ]
+  },
+  {
+    "case_id": "sign_recognizer_001",
+    "description": "Positive trigger — Transformer model predicts correct sign with high confidence",
+    "input": {
+      "landmark_sequence": "shape_(30,2172)_array_for_namaste_sign",
+      "threshold": 0.85
+    },
+    "expected_skill": "sign-recognizer",
+    "expected_tool_calls": [
+      { "tool": "load_transformer_model", "args": { "weights_path": "backend/weights/isl_transformer.pt" } },
+      { "tool": "run_inference", "args": { "sequence": "shape_(30,2172)_array" } }
+    ],
+    "expected_output_format": "{ word: string, confidence: float }",
+    "rubric": [
+      "predicted word matches ground truth label",
+      "confidence score is between 0 and 1",
+      "inference time under 100ms on CPU",
+      "model.eval() was called before inference",
+      "torch.no_grad() context was used"
+    ]
+  },
+  {
+    "case_id": "sign_recognizer_002",
+    "description": "Positive trigger — rejects low confidence prediction, returns null word",
+    "input": {
+      "landmark_sequence": "shape_(30,2172)_noisy_ambiguous_array",
+      "threshold": 0.85
+    },
+    "expected_skill": "sign-recognizer",
+    "expected_output_format": "{ word: null, confidence: float }",
+    "rubric": [
+      "word is null when confidence < 0.85",
+      "confidence score is still returned for debugging",
+      "no word is added to word buffer"
+    ]
+  },
+  {
+    "case_id": "sign_recognizer_003",
+    "description": "Negative trigger — should NOT accept raw video frames as input",
+    "input": {
+      "raw_video_frames": "list_of_bgr_images"
+    },
+    "expected_skill": null,
+    "expected_output_format": "error_message",
+    "rubric": [
+      "skill does not accept raw frames",
+      "returns ValueError: input must be pre-extracted landmarks of shape (30, 2172)"
+    ]
+  },
+  {
+    "case_id": "sign_recognizer_004",
+    "description": "Positive trigger — model is NOT reloaded on second inference call (loaded once at startup)",
+    "input": {
+      "landmark_sequence_1": "shape_(30,2172)_array",
+      "landmark_sequence_2": "shape_(30,2172)_array"
+    },
+    "expected_skill": "sign-recognizer",
+    "expected_tool_calls": [
+      { "tool": "load_transformer_model", "args": { "called_times": 1 } },
+      { "tool": "run_inference", "args": { "called_times": 2 } }
+    ],
+    "expected_output_format": "two predictions, one model load",
+    "rubric": [
+      "load_model() called exactly once across both predictions",
+      "second inference reuses the already-loaded model",
+      "both predictions return valid word or null with confidence score"
+    ]
+  },
+  {
+    "case_id": "sign_recognizer_005",
+    "description": "Adversarial — wrong input shape should raise clear error, not crash server",
+    "input": {
+      "landmark_sequence": "shape_(25,2172)_wrong_frames"
+    },
+    "expected_skill": "sign-recognizer",
+    "expected_output_format": "ValueError with shape info",
+    "rubric": [
+      "raises ValueError mentioning expected shape (30, 2172)",
+      "FastAPI returns HTTP 422 with clear error message",
+      "server does not crash"
+    ]
+  },
+  {
+    "case_id": "sentence_builder_001",
+    "description": "Positive trigger — word list produces grammatical sentence",
+    "input": {
+      "words": ["i", "good", "morning"]
+    },
+    "expected_skill": "sentence-builder",
+    "expected_tool_calls": [
+      { "tool": "call_gemini_api", "args": { "words": ["i", "good", "morning"] } }
+    ],
+    "expected_output_format": "natural_english_sentence",
+    "rubric": [
+      "output is a single grammatical sentence",
+      "output contains the semantic meaning of all input words",
+      "output does not contain the raw word list",
+      "response time under 3 seconds"
+    ]
+  },
+  {
+    "case_id": "sentence_builder_002",
+    "description": "Positive trigger — handles single word input",
+    "input": {
+      "words": ["hello"]
+    },
+    "expected_skill": "sentence-builder",
+    "expected_tool_calls": [
+      { "tool": "call_gemini_api", "args": { "words": ["hello"] } }
+    ],
+    "expected_output_format": "natural_english_sentence",
+    "rubric": [
+      "returns a complete sentence like 'Hello!' or 'Hello there.'",
+      "does not return just the bare word 'hello'"
+    ]
+  },
+  {
+    "case_id": "sentence_builder_003",
+    "description": "Negative trigger — empty word list must NOT call Gemini API",
+    "input": {
+      "words": []
+    },
+    "expected_skill": null,
+    "expected_output_format": "error_message",
+    "rubric": [
+      "Gemini API is NOT called",
+      "returns validation error: word list is empty"
+    ]
+  },
+  {
+    "case_id": "sentence_builder_004",
+    "description": "Adversarial — Gemini API failure must fall back gracefully, not crash",
+    "input": {
+      "words": ["name", "what", "you"],
+      "simulate_api_failure": true
+    },
+    "expected_skill": "sentence-builder",
+    "expected_output_format": "fallback_sentence_string",
+    "rubric": [
+      "Gemini API call fails (simulated)",
+      "fallback returns joined words as basic sentence: 'Name what you.'",
+      "FastAPI endpoint returns 200, not 500",
+      "error is logged but not exposed to user"
+    ]
+  },
+  {
+    "case_id": "code_review_001",
+    "description": "Positive trigger — reviews a PR with a hardcoded API key",
+    "input": {
+      "pr_number": 12,
+      "diff_contains": "GEMINI_API_KEY = 'AIza...'"
+    },
+    "expected_skill": "code-review",
+    "expected_tool_calls": [
+      { "tool": "fetch_pr", "args": { "pr_number": 12 } },
+      { "tool": "scan_for_secrets", "args": {} },
+      { "tool": "post_review_comment", "args": {} }
+    ],
+    "expected_output_format": "review_with_critical_issue",
+    "rubric": [
+      "flags hardcoded API key as CRITICAL",
+      "suggests using environment variable instead",
+      "does not approve the PR"
+    ]
+  },
+  {
+    "case_id": "code_review_002",
+    "description": "Negative trigger — docs-only PR should be skipped",
+    "input": {
+      "pr_files": ["README.md", "specs/isl_translation.md"]
+    },
+    "expected_skill": null,
+    "expected_output_format": "skip_message",
+    "rubric": [
+      "code review skill does not trigger",
+      "returns: no code changes detected, skipping review"
+    ]
+  },
+  {
+    "case_id": "code_review_003",
+    "description": "Positive trigger — catches missing model.eval() before inference",
+    "input": {
+      "pr_number": 17,
+      "diff_contains": "logits = model(tensor)  # model.eval() not called"
+    },
+    "expected_skill": "code-review",
+    "expected_output_format": "review_with_ml_issue",
+    "rubric": [
+      "flags missing model.eval() as ML Issue",
+      "explains that dropout remains active without eval() causing inconsistent predictions",
+      "suggests adding model.eval() before inference"
+    ]
+  }
+]
