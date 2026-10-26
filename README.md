@@ -1,24 +1,32 @@
 <div align="center">
 
-# 🤟 HyperTranslator
+<img src="docs/assets/banner.png" alt="HyperTranslator" height="72">
 
-### Real-time Indian Sign Language → English
+<br/>
 
-Sign in front of a webcam, read the sentence on screen.
-MediaPipe Holistic tracks 543 body, hand and face landmarks per frame, a Transformer encoder
-recognizes the sign, and Gemini turns the stream of signs into natural English.
+![Status](https://img.shields.io/badge/Status-in_development-FB923C?labelColor=30363d) ![PyTorch](https://img.shields.io/badge/PyTorch-Transformer-EE4C2C?labelColor=30363d&logo=pytorch&logoColor=white) ![MediaPipe](https://img.shields.io/badge/MediaPipe-Holistic-0097A7?labelColor=30363d&logo=google&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-Python_3.11-009688?labelColor=30363d&logo=fastapi&logoColor=white) ![Next.js](https://img.shields.io/badge/Next.js-16-000000?labelColor=30363d&logo=nextdotjs&logoColor=white) [![License](https://img.shields.io/badge/License-MIT-FB923C?labelColor=30363d)](LICENSE)
 
-![Status](https://img.shields.io/badge/status-in%20development-orange?style=for-the-badge)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
+<br/>
 
-![Python](https://img.shields.io/badge/Python_3.11-3776ab?logo=python&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white)
-![MediaPipe](https://img.shields.io/badge/MediaPipe-0097a7?logo=google&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js_16-000?logo=nextdotjs&logoColor=white)
-![Gemini](https://img.shields.io/badge/Gemini_2.5_Flash-8e75b2?logo=googlegemini&logoColor=white)
+<img src="docs/assets/card.png" alt="263 ISL signs — sign language to English" height="60">
+
+<br/><br/>
+
+[How it works](#how-it-works) | [Sign recognizer](#sign-recognizer) | [Roadmap](#roadmap) | [Getting started](#getting-started)
 
 </div>
+
+---
+
+# HyperTranslator: Real-Time Indian Sign Language to English
+
+Sign in front of a webcam, read the sentence on screen. MediaPipe Holistic tracks 543 body, hand and face landmarks per frame, a Transformer encoder recognizes the sign, and Gemini turns the stream of signs into natural English.
+
+## News
+
+- [2026-06] **Design v2.0:** the sign recognizer moves from an LSTM to a **Transformer encoder** that attends across all 30 frames at once, targeting ≥ 92% accuracy on 263 ISL classes; sentences come from **Gemini 2.5 Flash**.
+- [2026-06] **Project scaffold:** FastAPI service with health check and tests, Next.js app shell, Docker image, and the full technical spec.
+
 
 ---
 
